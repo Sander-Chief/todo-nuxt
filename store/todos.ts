@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia';
 
 type TTask = {
-  id: number,
+  id: number | null,
   done: boolean,
   content: string
 }
@@ -17,19 +17,17 @@ const getTodosSW = () => {
   }
 }
 
-const addTodoSW = (content: string, id?: number) => {
+const addTodoSW = (content: string, id: number | null, synced: boolean) => {
   if (navigator.serviceWorker.controller) {
     const swPayload: TSWPayload = {
       type: 'addTodo',
       data: {
-        done: 0,
+        id,
         content,
+        done: 0,
+        synced
       }
     };
-
-    if (id) {
-      swPayload.data.id = id;
-    }
 
     navigator.serviceWorker.controller.postMessage(swPayload);
   }
@@ -39,7 +37,9 @@ const deleteTodoSW = (id: number) => {
   if (navigator.serviceWorker.controller) {
     const swPayload: TSWPayload = {
       type: 'deleteTodo',
-      data: id
+      data: {
+        id
+      }
     };
 
     navigator.serviceWorker.controller.postMessage(swPayload);
@@ -55,7 +55,7 @@ const toggleTodoDoneSW = (id: number, done: boolean) => {
         done
       }
     };
-    
+
     navigator.serviceWorker.controller.postMessage(swPayload);
   }
 };
@@ -64,16 +64,16 @@ export const useTodoStore = defineStore('todos', () => {
   const todos = ref<TTask[]>([]);
   const newTodo = ref('');
 
-  useFetch('/api/getTodos').then((response) => {
+  useFetch('/api/getTodos').then(async (response) => {
     if (navigator.onLine) {
       const { data } = response;
       const rawData = toRaw(data.value) as TTask[];
-  
+
       const swPayload = {
         type: 'populate',
         data: rawData
       };
-  
+
       if (navigator.serviceWorker.controller) {
         navigator.serviceWorker.controller.postMessage(swPayload);
       } else {
@@ -82,7 +82,7 @@ export const useTodoStore = defineStore('todos', () => {
           registration.active?.postMessage(swPayload);
         });
       }
-  
+
       todos.value = rawData;
     } else {
       getTodosSW();
@@ -91,6 +91,10 @@ export const useTodoStore = defineStore('todos', () => {
   });
 
   const addTodo = async () => {
+    if (!newTodo.value) {
+      return;
+    }
+
     if (navigator.onLine) {
       try {
         const response: any = await $fetch('/api/addTodo', {
@@ -112,7 +116,7 @@ export const useTodoStore = defineStore('todos', () => {
   
           todos.value.push(newItem);
   
-          addTodoSW(newItem.content, response.id);
+          addTodoSW(newItem.content, response.id, true);
 
           newTodo.value = '';
         }
@@ -121,13 +125,21 @@ export const useTodoStore = defineStore('todos', () => {
         console.warn(error);
       }
     } else {
-      addTodoSW(newTodo.value);
+      addTodoSW(newTodo.value, null, false);
+  
+      todos.value.push({
+        id: null,
+        done: false,
+        content: newTodo.value
+      });
+
+      newTodo.value = '';
     }
   };
 
-  const doneTodo = async (todo: TTask) => {
+  const toggleTodoDone = async (todo: TTask) => {
     const { id, done } = todo;
-  
+
     if (navigator.onLine) {
       try {
         const response: any = await $fetch('/api/toggleTodoDone', {
@@ -142,7 +154,7 @@ export const useTodoStore = defineStore('todos', () => {
         });
     
         if (response.status === 'SUCCESS') {
-          toggleTodoDoneSW(id, done);
+          toggleTodoDoneSW(id as number, done);
 
           todo.done = !todo.done;
         }
@@ -150,7 +162,7 @@ export const useTodoStore = defineStore('todos', () => {
         console.warn(error);
       }
     } else if (navigator.serviceWorker.controller) {
-      toggleTodoDoneSW(id, done);
+      toggleTodoDoneSW(id as number, done);
 
       todo.done = !todo.done;
     }
@@ -188,7 +200,7 @@ export const useTodoStore = defineStore('todos', () => {
     todos,
     newTodo,
     addTodo,
-    doneTodo,
+    toggleTodoDone,
     deleteTodo
   };
 });

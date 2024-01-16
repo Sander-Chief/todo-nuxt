@@ -6,7 +6,7 @@ const todoStore = useTodoStore();
 const { todos, newTodo } = storeToRefs(todoStore);
 const {
   addTodo,
-  doneTodo,
+  toggleTodoDone,
   deleteTodo
 } = todoStore;
 
@@ -18,6 +18,18 @@ const {
 //     data: toRaw(todos.value)
 //   });
 // });
+
+async function registerSync() {
+  const registration = await navigator.serviceWorker.ready;
+
+  try {
+    window.addEventListener('online', () => {
+      registration.sync.register('sync-todos');
+    });
+  } catch(e) {
+    console.error('Sync registration failed');
+  }
+};
 
 useHead({
   title: 'Todo App',
@@ -42,6 +54,8 @@ useHead({
     }
   ]
 });
+
+registerSync();
 </script>
 
 <template>
@@ -68,7 +82,7 @@ useHead({
 
     <TaskList
       :todos="todos"
-      :doneTodo="doneTodo"
+      :toggleTodoDone="toggleTodoDone"
       :removeTodo="deleteTodo"
     />
 

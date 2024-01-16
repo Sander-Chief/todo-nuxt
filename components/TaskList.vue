@@ -1,5 +1,5 @@
 <script setup>
-const { todos, doneTodo, removeTodo } = defineProps(['todos', 'doneTodo', 'removeTodo']);
+const { todos, toggleTodoDone, removeTodo } = defineProps(['todos', 'toggleTodoDone', 'removeTodo']);
 </script>
 
 <template>
@@ -7,7 +7,7 @@ const { todos, doneTodo, removeTodo } = defineProps(['todos', 'doneTodo', 'remov
     <li v-for="(todo, index) in todos" :key="index">
       <span
         :class="{ done: todo.done }"
-        @click="doneTodo(todo)"
+        @click="toggleTodoDone(todo)"
       >
         {{ todo.content }}
       </span>
