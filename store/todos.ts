@@ -33,12 +33,13 @@ const addTodoSW = (content: string, id: number | null, synced: boolean) => {
   }
 };
 
-const deleteTodoSW = (id: number) => {
+const deleteTodoSW = (id: number, fullDelete: boolean) => {
   if (navigator.serviceWorker.controller) {
     const swPayload: TSWPayload = {
       type: 'deleteTodo',
       data: {
-        id
+        id,
+        fullDelete
       }
     };
 
@@ -182,7 +183,7 @@ export const useTodoStore = defineStore('todos', () => {
         });
     
         if (response.status === 'SUCCESS') {
-          deleteTodoSW(id);
+          deleteTodoSW(id, true);
 
           todos.value.splice(index, 1);
         }
@@ -190,7 +191,7 @@ export const useTodoStore = defineStore('todos', () => {
         console.warn(error);
       }
     } else if (navigator.serviceWorker.controller) {
-      deleteTodoSW(id);
+      deleteTodoSW(id, false);
 
       todos.value.splice(index, 1);
     }

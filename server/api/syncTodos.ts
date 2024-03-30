@@ -1,5 +1,14 @@
 import db from './db';
 
+type Todo = {
+ id: number | null,
+ idbId: number,
+ content: string,
+ done: number,
+ deleted: boolean,
+ synced: boolean
+}
+
 export default defineEventHandler(async (event) => {
 const todos = await readBody(event);
 
@@ -13,26 +22,36 @@ const todos = await readBody(event);
 
   return new Promise(async (resolve, reject) => {
     try {
-      const updatedRows = await Promise.all(todos.map(async (todo: any) => {
-        if (todo.deleted) {
+      const updatedRows = await Promise.all(todos.map(async (todo: Todo) => {
+        const {
+          id,
+          content,
+          done,
+          deleted
+        } = todo;
+
+        if (deleted) {
           // Delete the row from the database
-          await db.run('DELETE FROM todos WHERE id = ?;', todo.id);
+          await db.run('DELETE FROM todos WHERE id = ?;', id);
 
           return {
-            id: todo.id,
+            ...todo,
             deleted: true,
             synced: true
           }
-        } else if (todo.id === null) {
+        } else if (id === null) {
           // Create a new row in the database
-          const result = await db.run('INSERT INTO todos (content, done) VALUES (?, ?)', todo.content, todo.done);
-          // TODO FIX RETURN ID
-          console.log(result);
           // @ts-ignore
-          todo.id = result.lastID;
+          const result = await db.query('INSERT INTO todos (content, done) VALUES (?, ?) RETURNING id', [content, done]);
+
+          return {
+            ...todo,
+            id: result.rows[0].id,
+            synced: true
+          }
         } else {
           // Update the row in the database
-          await db.run('UPDATE todos SET content = ?, done = ? WHERE id = ?;', todo.content, todo.done, todo.id);
+          await db.run('UPDATE todos SET content = ?, done = ? WHERE id = ?;', content, done, id);
         }
   
         return {

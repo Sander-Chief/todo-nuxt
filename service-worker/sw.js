@@ -64,36 +64,9 @@ const populateIndexedDB = (data) => {
           console.error('Error adding data:', event.target.error);
         };
       });
-    }
-  };
-};
-
-const syncTodos = () => {
-  if (!db) {
-    return;
-  }
-
-  const transaction = db.transaction(todoStoreName, 'readwrite');
-  const objectStore = transaction.objectStore(todoStoreName);
-  const unsyncedTodos = [];
-
-  const cursorRequest = objectStore.openCursor();
-
-  cursorRequest.onsuccess = function (event) {
-    const cursor = event.target.result;
-    if (cursor) {
-      if (!cursor.value.synced) {
-        unsyncedTodos.push(cursor.value);
-      }
-      cursor.continue();
     } else {
-      // TODO update IndexedDB with response data
-      return syncTodosWithBackend(unsyncedTodos);
+      // TODO also sync todos on page load
     }
-  };
-
-  cursorRequest.onerror = function (event) {
-    console.error('Error iterating over records in IndexedDB:', event.target.error);
   };
 };
 
@@ -109,6 +82,72 @@ const syncTodosWithBackend = async (unsyncedTodos) => {
   const json = await response.json();
 
   return json;
+};
+
+const syncTodos = () => {
+  if (!db) {
+    return;
+  }
+
+  let transaction = db.transaction(todoStoreName, 'readwrite');
+  let objectStore = transaction.objectStore(todoStoreName);
+  const unsyncedTodos = [];
+
+  const cursorRequest = objectStore.openCursor();
+
+  cursorRequest.onsuccess = async function (event) {
+    const cursor = event.target.result;
+    if (cursor) {
+      if (!cursor.value.synced) {
+        console.log(cursor);
+        unsyncedTodos.push({
+          ...cursor.value,
+          idbId: cursor.key
+        });
+      }
+      cursor.continue();
+    } else {
+      if (!unsyncedTodos.length) return;
+
+      try {
+        const response = await syncTodosWithBackend(unsyncedTodos);
+        console.log(response);
+        const { updatedRows } = response;
+
+        transaction = db.transaction(todoStoreName, 'readwrite');
+        objectStore = transaction.objectStore(todoStoreName);
+
+        updatedRows.forEach((row) => {
+          const { idbId } = row;
+          const dataRequest = objectStore.get(idbId);
+
+          dataRequest.onsuccess = (event) => {
+            const rowData = event.target.result;
+
+            if (rowData) {
+              if (row.deleted) {
+                objectStore.delete(idbId);
+              } else {
+                const { content, done } = row;
+
+                rowData.content = content;
+                rowData.done = done;
+                rowData.synced = true;
+
+                objectStore.put(rowData, idbId);
+              }
+            }
+          }
+        });
+      } catch (error) {
+        console.error(error);
+      }
+    }
+  };
+
+  cursorRequest.onerror = function (event) {
+    console.error('Error iterating over records in IndexedDB:', event.target.error);
+  };
 };
 
 self.addEventListener('install', (e) => {
@@ -127,7 +166,6 @@ self.addEventListener('fetch', async (event) => {
 
   switch (urlPath) {
     case 'getTodos': {
-      console.warn('getTodos');
       event.respondWith(
         fetch(event.request).then((response) => {
           const clonedResponse = response.clone();
@@ -184,7 +222,7 @@ self.onmessage = function(event) {
   }
 
   if (type === 'deleteTodo') {
-    const { id } = data;
+    const { id, fullDelete } = data;
 
     const deleteRequest = objectStore.openCursor();
 
@@ -200,7 +238,7 @@ self.onmessage = function(event) {
             synced: false,
           };
 
-          const updateRequest = cursor.update(newData);
+          const updateRequest = fullDelete ? cursor.delete() : cursor.update(newData);
 
           updateRequest.onsuccess = () => {
             console.log('Value marked as deleted successfully');
