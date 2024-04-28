@@ -71,16 +71,18 @@ export const useTodoStore = defineStore('todos', () => {
       const rawData = toRaw(data.value) as TTask[];
 
       const swPayload = {
-        type: 'populate',
+        type: 'populateTodos',
         data: rawData
       };
 
       if (navigator.serviceWorker.controller) {
         navigator.serviceWorker.controller.postMessage(swPayload);
       } else {
-        console.log('[Service Worker] inactive or not ready yet');
+        console.log('Service Worker is inactive or not ready yet');
         navigator.serviceWorker.ready.then((registration) => {
-          registration.active?.postMessage(swPayload);
+          registration.pushManager.getSubscription().then((subscription) => {
+            navigator.serviceWorker.controller?.postMessage(swPayload);
+          });
         });
       }
 
@@ -168,7 +170,7 @@ export const useTodoStore = defineStore('todos', () => {
       todo.done = !todo.done;
     }
   }
-  
+
   const deleteTodo = async (id: number, index: number) => {
     if (navigator.onLine) {
       try {

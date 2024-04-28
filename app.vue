@@ -1,4 +1,5 @@
 <script setup>
+import { ref } from 'vue';
 import { storeToRefs } from 'pinia';
 import { useTodoStore } from './store/todos';
 
@@ -9,15 +10,6 @@ const {
   toggleTodoDone,
   deleteTodo
 } = todoStore;
-
-// navigator.serviceWorker.ready.then((registration) => {
-//   const rawValue = toRaw(todos.value);
-//   console.log(rawValue);
-//   registration.active?.postMessage({
-//     type: 'populate',
-//     data: toRaw(todos.value)
-//   });
-// });
 
 async function registerSync() {
   const registration = await navigator.serviceWorker.ready;
@@ -30,6 +22,8 @@ async function registerSync() {
     console.error('Sync registration failed');
   }
 };
+
+const isOnline = ref(true);
 
 useHead({
   title: 'Todo App',
@@ -56,12 +50,24 @@ useHead({
 });
 
 registerSync();
+
+window.addEventListener('online', () => {
+  isOnline.value = true;
+});
+
+window.addEventListener('offline', () => {
+  isOnline.value = false;
+});
 </script>
 
 <template>
   <!-- <VitePwaManifest /> -->
 
-  <ClientOnly>
+    <div
+      class="online-indicator"
+      :class="{ 'offline': !isOnline }"
+    ></div>
+
     <h1>Todo App</h1>
 
     <form @submit.prevent="onSubmit">
@@ -87,7 +93,6 @@ registerSync();
     />
 
     <h4 v-if="!todos?.length">Empty list.</h4>
-  </ClientOnly>
 </template>
 
 <style lang="less">
@@ -201,6 +206,18 @@ registerSync();
         text-align: center;
         opacity: 0.5;
         margin: 0;
+      }
+
+      .online-indicator {
+        position: absolute;
+        height: 20px;
+        width: 20px;
+        border-radius: 50%;
+        background-color: green;
+
+        &.offline {
+          background-color: red;
+        }
       }
     }
   }

@@ -2,7 +2,7 @@
 // import { precacheAndRoute, cleanupOutdatedCaches, createHandlerBoundToURL } from 'workbox-precaching';
 // import { registerRoute, NavigationRoute } from 'workbox-routing';
 
-self.skipWaiting();
+// self.skipWaiting();
 // clientsClaim();
 // precacheAndRoute(self.__WB_MANIFEST);
 // cleanupOutdatedCaches();
@@ -24,7 +24,7 @@ const initDB = () => {
   const request = indexedDB.open(dbName, 3);
 
   request.onerror = (event) => {
-    console.error('Error encountered during IndexedDB init. Offline mode will be disabled.');
+    console.error('[Service Worker] Error encountered during IndexedDB init. Offline mode will be disabled.');
   };
 
   request.onupgradeneeded = function (event) {
@@ -35,10 +35,10 @@ const initDB = () => {
 
   request.onsuccess = (event) => {
     db = event.target.result;
-    console.log('IndexedDB instance ready');
+    console.log('[Service Worker] IndexedDB instance ready');
 
     db.onerror = (event) => {
-      console.error(`IndexedDB error: ${event.target.errorCode}`);
+      console.error(`[Service Worker] IndexedDB error: ${event.target.errorCode}`);
     };
   };
 };
@@ -52,7 +52,7 @@ const populateIndexedDB = (data) => {
     const cursor = event.target.result;
 
     if (!cursor) {
-      console.log('No data, populating...');
+      console.log('[Service Worker] No data, populating...');
 
       data.forEach((dataEntry) => {
         const addObjectRequest = objectStore.add({
@@ -61,7 +61,7 @@ const populateIndexedDB = (data) => {
         });
     
         addObjectRequest.onerror = function(event) {
-          console.error('Error adding data:', event.target.error);
+          console.error('[Service Worker] Error adding data:', event.target.error);
         };
       });
     } else {
@@ -99,7 +99,6 @@ const syncTodos = () => {
     const cursor = event.target.result;
     if (cursor) {
       if (!cursor.value.synced) {
-        console.log(cursor);
         unsyncedTodos.push({
           ...cursor.value,
           idbId: cursor.key
@@ -111,7 +110,6 @@ const syncTodos = () => {
 
       try {
         const response = await syncTodosWithBackend(unsyncedTodos);
-        console.log(response);
         const { updatedRows } = response;
 
         transaction = db.transaction(todoStoreName, 'readwrite');
@@ -146,16 +144,25 @@ const syncTodos = () => {
   };
 
   cursorRequest.onerror = function (event) {
-    console.error('Error iterating over records in IndexedDB:', event.target.error);
+    console.error('[Service Worker] Error iterating over records in IndexedDB:', event.target.error);
   };
 };
 
-self.addEventListener('install', (e) => {
+self.addEventListener('install', (event) => {
+  event.waitUntil(self.skipWaiting());
+
   console.log('[Service Worker] Install');
 
   if (!db) {
     initDB();
   }
+});
+
+self.addEventListener('activate', (event) => {
+  event.waitUntil(self.skipWaiting());
+  clients.claim();
+
+  console.log('[Service Worker] Active');
 });
 
 self.addEventListener('fetch', async (event) => {
@@ -171,8 +178,6 @@ self.addEventListener('fetch', async (event) => {
           const clonedResponse = response.clone();
 
           clonedResponse.json().then((responseData) => {
-            console.log(responseData);
-            console.log(db);
             if (!db) {
               initDB();
             }
@@ -197,104 +202,119 @@ self.onmessage = function(event) {
   const transaction = db.transaction(todoStoreName, 'readwrite');
   const objectStore = transaction.objectStore(todoStoreName);
 
-  if (type === 'getTodos') {
-    const getAllRequest = objectStore.openCursor();
+  switch (type) {
+    case 'getTodos': {
+      const getAllRequest = objectStore.openCursor();
 
-    getAllRequest.onsuccess = function(event) {
-      const cursor = event.target.result;
-
-      if (!cursor) {
-        console.log('No data');
-      }
-    };
-  }
-
-  if (type === 'addTodo') {
-    const addObjectRequest = objectStore.add(data);
-
-    addObjectRequest.onsuccess = function(dbEvent) {
-      console.log('Data added successfully');
-    };
-
-    addObjectRequest.onerror = function(dbEvent) {
-      console.error('Error adding data:', event.target.error);
-    };
-  }
-
-  if (type === 'deleteTodo') {
-    const { id, fullDelete } = data;
-
-    const deleteRequest = objectStore.openCursor();
-
-    deleteRequest.onsuccess = function (event) {
-      const cursor = event.target.result;
-      if (cursor) {
-        const storedData = cursor.value;
-
-        if (storedData.id === id) {
-          const newData = {
-            ...storedData,
-            deleted: true,
-            synced: false,
-          };
-
-          const updateRequest = fullDelete ? cursor.delete() : cursor.update(newData);
-
-          updateRequest.onsuccess = () => {
-            console.log('Value marked as deleted successfully');
-          };
-
-          updateRequest.onerror = (updateEvent) => {
-            console.error('Marking as deleted error:', updateEvent.target.error);
-          };
-        } else {
-          cursor.continue();
+      getAllRequest.onsuccess = function(event) {
+        const cursor = event.target.result;
+  
+        if (!cursor) {
+          console.log('[Service Worker] No data');
         }
-      }
-    };
+      };
 
-    deleteRequest.onerror = function(dbEvent) {
-      console.error('Error deleting data:', event.target.error);
-    };
-  }
+      break;
+    }
 
-  if (type === 'toggleTodoDone') {
-    const { id, done } = data;
+    case 'addTodo': {
+      const addObjectRequest = objectStore.add(data);
 
-    const getRequest = objectStore.openCursor();
+      addObjectRequest.onsuccess = function(dbEvent) {
+        console.log('[Service Worker] Data added successfully');
+      };
+  
+      addObjectRequest.onerror = function(dbEvent) {
+        console.error('[Service Worker] Error adding data:', event.target.error);
+      };
 
-    getRequest.onsuccess = function (event) {
-      const cursor = event.target.result;
+      break;
+    }
 
-      if (cursor) {
-        const storedData = cursor.value;
+    case 'deleteTodo': {
+      const { id, fullDelete } = data;
 
-        if (storedData.id === id) {
-          const newData = {
-            ...storedData,
-            done: !done ? 1 : 0,
-            synced: false,
-          };
-
-          const updateRequest = cursor.update(newData);
-
-          updateRequest.onsuccess = () => {
-            console.log('Value updated successfully');
-          };
-
-          updateRequest.onerror = (updateEvent) => {
-            console.error('Update error:', updateEvent.target.error);
-          };
-        } else {
-          cursor.continue();
+      const deleteRequest = objectStore.openCursor();
+  
+      deleteRequest.onsuccess = function (event) {
+        const cursor = event.target.result;
+        if (cursor) {
+          const storedData = cursor.value;
+  
+          if (storedData.id === id) {
+            const newData = {
+              ...storedData,
+              deleted: true,
+              synced: false,
+            };
+  
+            const updateRequest = fullDelete ? cursor.delete() : cursor.update(newData);
+  
+            updateRequest.onsuccess = () => {
+              console.log('[Service Worker] Value marked as deleted successfully');
+            };
+  
+            updateRequest.onerror = (updateEvent) => {
+              console.error('[Service Worker] Marking as deleted error:', updateEvent.target.error);
+            };
+          } else {
+            cursor.continue();
+          }
         }
-      }
-    };
+      };
+  
+      deleteRequest.onerror = function(dbEvent) {
+        console.error('[Service Worker] Error deleting data:', event.target.error);
+      };
 
-    getRequest.onerror = function (event) {
-      console.error(event.target.error);
-    };
+      break;
+    }
 
+    case 'toggleTodoDone': {
+      const { id, done } = data;
+
+      const getRequest = objectStore.openCursor();
+  
+      getRequest.onsuccess = function (event) {
+        const cursor = event.target.result;
+  
+        if (cursor) {
+          const storedData = cursor.value;
+  
+          if (storedData.id === id) {
+            const newData = {
+              ...storedData,
+              done: !done ? 1 : 0,
+              synced: false,
+            };
+  
+            const updateRequest = cursor.update(newData);
+  
+            updateRequest.onsuccess = () => {
+              console.log('[Service Worker] Value updated successfully');
+            };
+  
+            updateRequest.onerror = (updateEvent) => {
+              console.error('[Service Worker] Update error:', updateEvent.target.error);
+            };
+          } else {
+            cursor.continue();
+          }
+        }
+      };
+  
+      getRequest.onerror = function (event) {
+        console.error(event.target.error);
+      };
+
+      break;
+    }
+
+    case 'populateTodos': {
+      populateIndexedDB(data);
+
+      break;
+    }
   }
 };
 
