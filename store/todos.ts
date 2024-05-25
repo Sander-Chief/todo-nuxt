@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia';
 
-type TTask = {
+type TTodo = {
   id: number | null,
   done: boolean,
   content: string
@@ -47,13 +47,14 @@ const deleteTodoSW = (id: number, fullDelete: boolean) => {
   }
 };
 
-const toggleTodoDoneSW = (id: number, done: boolean) => {
+const toggleTodoDoneSW = (id: number, done: boolean, synced: boolean) => {
   if (navigator.serviceWorker.controller) {
     const swPayload: TSWPayload = {
       type: 'toggleTodoDone',
       data: {
         id,
-        done
+        done,
+        synced
       }
     };
 
@@ -62,13 +63,13 @@ const toggleTodoDoneSW = (id: number, done: boolean) => {
 };
 
 export const useTodoStore = defineStore('todos', () => {
-  const todos = ref<TTask[]>([]);
+  const todos = ref<TTodo[]>([]);
   const newTodo = ref('');
 
   useFetch('/api/getTodos').then(async (response) => {
     if (navigator.onLine) {
       const { data } = response;
-      const rawData = toRaw(data.value) as TTask[];
+      const rawData = toRaw(data.value) as TTodo[];
 
       const swPayload = {
         type: 'populateTodos',
@@ -140,7 +141,7 @@ export const useTodoStore = defineStore('todos', () => {
     }
   };
 
-  const toggleTodoDone = async (todo: TTask) => {
+  const toggleTodoDone = async (todo: TTodo) => {
     const { id, done } = todo;
 
     if (navigator.onLine) {
@@ -155,9 +156,9 @@ export const useTodoStore = defineStore('todos', () => {
             'Content-Type': 'application/json',
           },
         });
-    
+
         if (response.status === 'SUCCESS') {
-          toggleTodoDoneSW(id as number, done);
+          toggleTodoDoneSW(id as number, done, true);
 
           todo.done = !todo.done;
         }
@@ -165,7 +166,7 @@ export const useTodoStore = defineStore('todos', () => {
         console.warn(error);
       }
     } else if (navigator.serviceWorker.controller) {
-      toggleTodoDoneSW(id as number, done);
+      toggleTodoDoneSW(id as number, done, false);
 
       todo.done = !todo.done;
     }

@@ -271,7 +271,7 @@ self.onmessage = function(event) {
     }
 
     case 'toggleTodoDone': {
-      const { id, done } = data;
+      const { id, done, synced } = data;
 
       const getRequest = objectStore.openCursor();
   
@@ -285,7 +285,7 @@ self.onmessage = function(event) {
             const newData = {
               ...storedData,
               done: !done ? 1 : 0,
-              synced: false,
+              synced,
             };
   
             const updateRequest = cursor.update(newData);
