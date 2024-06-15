@@ -19,6 +19,7 @@
   },
   "dependencies": {
     "@pinia/nuxt": "^0.4.11",
+    "@vueuse/core": "^10.11.0",
     "pinia": "^2.1.6",
     "sqlite3": "^5.1.6",
     "workbox-core": "^7.0.0",

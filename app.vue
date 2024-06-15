@@ -58,7 +58,7 @@ registerSync();
   <h1>Todo App</h1>
 
   <TodoForm
-    :addTodo="addTodo"
+    @add-todo="addTodo"
   />
 
   <TodoList
@@ -69,8 +69,6 @@ registerSync();
 </template>
 
 <style lang="less">
-  @import './assets/less/constants.less';
-
   body {
     margin: 0;
     padding: 0;

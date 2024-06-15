@@ -24,8 +24,6 @@ const { todos, toggleTodoDone, removeTodo } = defineProps(['todos', 'toggleTodoD
 </template>
 
 <style lang="less" scoped>
-@import '../assets/less/constants.less';
-
   .todo-list-header {
     font-size: 22px;
     border-bottom: @border;

@@ -1,9 +1,11 @@
 <script setup>
-import { inject } from 'vue';
-
-const { addTodo } = defineProps(['addTodo']);
+import { inject, defineEmits } from 'vue';
 
 const newTodo = inject('newTodo');
+
+const emit = defineEmits(['addTodo']);
+
+const onSubmit = () => emit('addTodo');
 </script>
 
 <template>
@@ -15,18 +17,13 @@ const newTodo = inject('newTodo');
       autocomplete="off"
       class="todo-input"
     />
-    <button
-      class="todo-add-button"
-      @click="addTodo()"
-    >
+    <button class="todo-add-button">
       Add a task
     </button>
   </form>
 </template>
 
 <style lang="less" scoped>
-  @import '../assets/less/constants.less';
-
   .todo-form {
     display: flex;
     flex-direction: column;

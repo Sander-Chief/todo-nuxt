@@ -1,21 +1,14 @@
 <script setup>
-  import { ref } from 'vue';
+import { reactive } from 'vue';
+import { useNetwork } from '@vueuse/core';
 
-  const isOnline = ref(true);
-
-  window?.addEventListener('online', () => {
-    isOnline.value = true;
-  });
-
-  window?.addEventListener('offline', () => {
-    isOnline.value = false;
-  });
+const network = reactive(useNetwork());
 </script>
 
 <template>
   <div
     class="online-indicator"
-    :class="{ 'offline': !isOnline }"
+    :class="{ 'offline': !network.isOnline }"
   ></div>
 </template>
 

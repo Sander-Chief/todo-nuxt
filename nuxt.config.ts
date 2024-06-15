@@ -34,5 +34,14 @@ export default defineNuxtConfig({
       // navigateFallback: '/',
     // }
   },
-  ssr: false
+  ssr: false,
+  vite: {
+    css: {
+      preprocessorOptions: {
+        less: {
+          additionalData: `@import '~/assets/less/constants.less';`,
+        }
+      }
+    }
+  }
 });
