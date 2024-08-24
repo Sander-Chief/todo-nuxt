@@ -18,8 +18,6 @@ const todos = await readBody(event);
     };
   }
 
-  console.log(todos);
-
   return new Promise(async (resolve, reject) => {
     try {
       const updatedRows = await Promise.all(todos.map(async (todo: Todo) => {

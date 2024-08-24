@@ -1,23 +1,16 @@
 <script setup>
-const { todos, toggleTodoDone, removeTodo } = defineProps(['todos', 'toggleTodoDone', 'removeTodo']);
+const { todos } = defineProps(['todos']);
 </script>
 
 <template>
   <h2 class="todo-list-header">Task List</h2>
 
   <ul class="todo-list">
-    <li v-for="(todo, index) in todos" :key="index" class="todo-wrapper">
-      <span
-        class="todo"
-        :class="{ done: todo.done }"
-        @click="toggleTodoDone(todo)"
-      >
-        {{ todo.content }}
-      </span>
-      <button @click="removeTodo(todo.id, index)" class="todo-add-button">
-        Remove
-      </button>
-    </li>
+      <TodoItem
+        :todo="todo"
+        :index="index"
+        v-for="(todo, index) in todos"
+      />
   </ul>
 
   <h4 v-if="!todos?.length" class="empty-list">Empty list.</h4>
@@ -32,29 +25,6 @@ const { todos, toggleTodoDone, removeTodo } = defineProps(['todos', 'toggleTodoD
 
   .todo-list {
     padding: 10px;
-  }
-
-  .todo-wrapper {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border: @border;
-    padding: @size2 @size4;
-    border-radius: @size1;
-    margin-bottom: @size2;
-  }
-
-  .todo {
-    cursor: pointer;
-  }
-
-  .done {
-    text-decoration: line-through;
-  }
-
-  .todo-add-button {
-    font-size: @size2;
-    padding: @size1;
   }
 
   .empty-list {

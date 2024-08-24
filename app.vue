@@ -1,18 +1,4 @@
 <script setup>
-import { provide } from 'vue';
-import { storeToRefs } from 'pinia';
-import { useTodoStore } from './store/todos';
-
-const todoStore = useTodoStore();
-const { todos, newTodo } = storeToRefs(todoStore);
-const {
-  addTodo,
-  toggleTodoDone,
-  deleteTodo
-} = todoStore;
-
-provide('newTodo', newTodo);
-
 async function registerSync() {
   const registration = await navigator.serviceWorker.ready;
 
@@ -53,19 +39,7 @@ registerSync();
 </script>
 
 <template>
-  <OnlineIndicator />
-
-  <h1>Todo App</h1>
-
-  <TodoForm
-    @add-todo="addTodo"
-  />
-
-  <TodoList
-    :todos="todos"
-    :toggleTodoDone="toggleTodoDone"
-    :removeTodo="deleteTodo"
-  />
+  <NuxtPage />
 </template>
 
 <style lang="less">

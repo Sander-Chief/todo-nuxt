@@ -1,14 +1,13 @@
 <script setup>
 import { reactive } from 'vue';
-import { useNetwork } from '@vueuse/core';
 
-const network = reactive(useNetwork());
+const isOnline = reactive(useNetwork());
 </script>
 
 <template>
   <div
     class="online-indicator"
-    :class="{ 'offline': !network.isOnline }"
+    :class="{ 'offline': !isOnline }"
   ></div>
 </template>
 
