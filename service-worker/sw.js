@@ -126,8 +126,9 @@ const syncTodos = () => {
               if (row.deleted) {
                 objectStore.delete(idbId);
               } else {
-                const { content, done } = row;
+                const { id, content, done } = row;
 
+                rowData.id = id;
                 rowData.content = content;
                 rowData.done = done;
                 rowData.synced = true;

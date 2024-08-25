@@ -39,8 +39,7 @@ const todos = await readBody(event);
           }
         } else if (id === null) {
           // Create a new row in the database
-          // @ts-ignore
-          const result = await db.query('INSERT INTO todos (content, done) VALUES (?, ?) RETURNING id', [content, done]);
+          const result = await db.query!('INSERT INTO todos (content, done) VALUES (?, ?) RETURNING id', [content, done]);
 
           return {
             ...todo,

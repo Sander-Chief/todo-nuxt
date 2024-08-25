@@ -1,15 +1,24 @@
-import sqlite3 from 'sqlite3';
+import sqlite3, { Database } from 'sqlite3';
 import path from 'path';
 
-const dbPath = path.resolve(path.dirname('./'), 'todo.db');
-const db = new sqlite3.Database(dbPath);
+type RowEntry = {
+  id: number,
+}
 
-// @ts-ignore
-db.query = function (sql: string, params: any[]) {
-  var that = this;
+export type DatabaseExtended = Database & {
+  query?: (sql: string, params: any[]) => Promise<{
+    rows: RowEntry[]
+  }>,
+}
+
+const dbPath = path.resolve(path.dirname('./'), 'todo.db');
+const db: DatabaseExtended = new sqlite3.Database(dbPath);
+
+db.query = function (sql, params) {
+  const self = this;
+
   return new Promise(function (resolve, reject) {
-    // @ts-ignore
-    that.all(sql, params, function (error, rows) {
+    self.all(sql, params, function (error: Error, rows: RowEntry[]) {
       if (error)
         reject(error);
       else

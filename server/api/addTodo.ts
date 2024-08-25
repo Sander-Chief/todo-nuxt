@@ -13,12 +13,11 @@ export default defineEventHandler(async (event) => {
                 RETURNING id`;
 
   return new Promise((resolve, reject) => {
-    db.run(query, [false, content], function (error: unknown) {
+    db.run(query, [false, content], function (error) {
       if (error) {
         reject(error);
       } else {
         resolve({
-          // @ts-ignore
           id: this.lastID,
           status: 'SUCCESS'
         });
