@@ -9,7 +9,8 @@ export default defineNuxtConfig({
   ],
   modules: [
     '@pinia/nuxt',
-    '@vite-pwa/nuxt'
+    '@vite-pwa/nuxt',
+    '@nuxt/test-utils/module'
   ],
   pwa: {
     devOptions: {
@@ -30,5 +31,6 @@ export default defineNuxtConfig({
         }
       }
     }
-  }
+  },
+  compatibilityDate: '2024-09-29'
 });

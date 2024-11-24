@@ -312,6 +312,10 @@ self.onmessage = function(event) {
     }
 
     case 'populateTodos': {
+      if (!db) {
+        initDB();
+      }
+
       populateIndexedDB(data);
 
       break;

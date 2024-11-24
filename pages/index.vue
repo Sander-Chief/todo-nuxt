@@ -6,10 +6,13 @@ import { useTodoStore } from '~/store/todos';
 const todoStore = useTodoStore();
 const { todos, newTodo } = storeToRefs(todoStore);
 const {
+  getTodos,
   addTodo,
   toggleTodoDone,
   deleteTodo
 } = todoStore;
+
+getTodos();
 
 provide('newTodo', newTodo);
 provide('toggleTodoDone', toggleTodoDone);

@@ -1,5 +1,5 @@
-<script setup>
-import { inject, defineEmits } from 'vue';
+<script setup lang='ts'>
+import { inject } from 'vue';
 
 const newTodo = inject('newTodo');
 

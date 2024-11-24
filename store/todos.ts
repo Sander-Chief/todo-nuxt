@@ -66,33 +66,35 @@ export const useTodoStore = defineStore('todos', () => {
   const todos = ref<TTodo[]>([]);
   const newTodo = ref('');
 
-  useFetch('/api/getTodos').then(async (response) => {
-    if (navigator.onLine) {
-      const { data } = response;
-      const rawData = toRaw(data.value) as TTodo[];
-
-      const swPayload = {
-        type: 'populateTodos',
-        data: rawData
-      };
-
-      if (navigator.serviceWorker.controller) {
-        navigator.serviceWorker.controller.postMessage(swPayload);
-      } else {
-        console.log('Service Worker is inactive or not ready yet');
-        navigator.serviceWorker.ready.then((registration) => {
-          registration.pushManager.getSubscription().then((subscription) => {
-            navigator.serviceWorker.controller?.postMessage(swPayload);
+  const getTodos = () => {
+    useFetch('/api/getTodos').then(async (response) => {
+      if (navigator.onLine) {
+        const { data } = response;
+        const rawData = toRaw(data.value) as TTodo[];
+  
+        const swPayload = {
+          type: 'populateTodos',
+          data: rawData
+        };
+  
+        if (navigator.serviceWorker.controller) {
+          navigator.serviceWorker.controller.postMessage(swPayload);
+        } else {
+          console.log('Service Worker is inactive or not ready yet');
+          navigator.serviceWorker.ready.then((registration) => {
+            registration.pushManager.getSubscription().then((subscription) => {
+              navigator.serviceWorker.controller?.postMessage(swPayload);
+            });
           });
-        });
+        }
+  
+        todos.value = rawData;
+      } else {
+        getTodosSW();
+        // TODO add logic for listening to messages from SW
       }
-
-      todos.value = rawData;
-    } else {
-      getTodosSW();
-      // TODO add logic for listening to messages from SW
-    }
-  });
+    });
+  }
 
   const addTodo = async () => {
     if (!newTodo.value) {
@@ -203,6 +205,7 @@ export const useTodoStore = defineStore('todos', () => {
   return {
     todos,
     newTodo,
+    getTodos,
     addTodo,
     toggleTodoDone,
     deleteTodo
