@@ -1,10 +1,11 @@
 <script setup lang='ts'>
 import { inject } from 'vue';
+import { type TTodo } from '@/store/todos';
 
 const { todo, index } = defineProps(['todo', 'index']);
 
-const toggleTodoDone = inject('toggleTodoDone');
-const deleteTodo = inject('deleteTodo');
+const toggleTodoDone = inject<(todo: TTodo) => Promise<void>>('toggleTodoDone');
+const deleteTodo = inject<(id: number, index: number) => Promise<void>>('deleteTodo');
 </script>
 
 <template>
@@ -12,11 +13,11 @@ const deleteTodo = inject('deleteTodo');
     <span
         class="todo"
         :class="{ done: todo.done }"
-        @click="toggleTodoDone(todo)"
+        @click="toggleTodoDone?.(todo)"
       >
         {{ todo.content }}
       </span>
-      <button class="todo-add-button" @click="deleteTodo(todo.id, index)">Remove</button>
+      <button class="todo-add-button" @click="deleteTodo?.(todo.id, index)">Remove</button>
   </div>
 </template>
 

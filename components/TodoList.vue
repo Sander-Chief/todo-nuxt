@@ -5,12 +5,16 @@ const { todos } = defineProps(['todos']);
 <template>
   <h2 class="todo-list-header">Task List</h2>
 
-  <ul class="todo-list">
-      <TodoItem
-        :todo="todo"
-        :index="index"
-        v-for="(todo, index) in todos"
-      />
+  <ul
+    v-if="todos?.length"
+    class="todo-list"
+    data-testid="todo-list"
+  >
+    <TodoItem
+      :todo="todo"
+      :index="index"
+      v-for="(todo, index) in todos"
+    />
   </ul>
 
   <h4 v-if="!todos?.length" class="empty-list">Empty list.</h4>

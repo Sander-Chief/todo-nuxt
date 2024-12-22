@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia';
 
-type TTodo = {
+export type TTodo = {
   id: number | null,
   done: boolean,
   content: string

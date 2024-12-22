@@ -8,6 +8,7 @@ const isOnline = reactive(useNetwork());
   <div
     class="online-indicator"
     :class="{ 'offline': !isOnline }"
+    data-testid="online-indicator"
   ></div>
 </template>
 
