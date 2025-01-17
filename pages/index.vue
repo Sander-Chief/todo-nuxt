@@ -7,16 +7,41 @@ const todoStore = useTodoStore();
 const { todos, newTodo } = storeToRefs(todoStore);
 const {
   getTodos,
+  setTodos,
   addTodo,
   toggleTodoDone,
   deleteTodo
 } = todoStore;
+
+async function registerSync() {
+  const registration = await navigator.serviceWorker.ready;
+
+  try {
+    window.addEventListener('online', async () => {
+      registration.active.postMessage({
+        type: 'sync-todos',
+      });
+    });
+
+    navigator.serviceWorker.addEventListener('message', (event) => {
+      const { type } = event.data;
+
+      if (type === 'sync-todos') {
+        setTodos(event.data.rows);
+      }
+    });
+  } catch(e) {
+    console.error('Sync registration failed');
+  }
+};
 
 getTodos();
 
 provide('newTodo', newTodo);
 provide('toggleTodoDone', toggleTodoDone);
 provide('deleteTodo', deleteTodo);
+
+registerSync();
 </script>
 
 <template>

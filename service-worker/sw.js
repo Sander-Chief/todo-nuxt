@@ -1,27 +1,11 @@
-// import { clientsClaim } from 'workbox-core'
-// import { precacheAndRoute, cleanupOutdatedCaches, createHandlerBoundToURL } from 'workbox-precaching';
-// import { registerRoute, NavigationRoute } from 'workbox-routing';
-
-// self.skipWaiting();
-// clientsClaim();
-// precacheAndRoute(self.__WB_MANIFEST);
-// cleanupOutdatedCaches();
-
-// // try {
-// // 	const handler = createHandlerBoundToURL('/');
-// // 	const route = new NavigationRoute(handler);
-// // 	registerRoute(route);
-// // } catch (error) {
-// // 	console.warn('Error while registering cache route', { error });
-// // }
 const apiUrlPaths = ['getTodos', 'addTodo', 'deleteTodo', 'toggleTodoDone'];
 const dbName = 'ToDoDB';
 const todoStoreName = 'ToDoStore';
 
 let db;
 
-const initDB = () => {
-  const request = indexedDB.open(dbName, 3);
+const initDB = async () => {
+  const request = await indexedDB.open(dbName, 3);
 
   request.onerror = (event) => {
     console.error('[Service Worker] Error encountered during IndexedDB init. Offline mode will be disabled.');
@@ -84,12 +68,14 @@ const syncTodosWithBackend = async (unsyncedTodos) => {
   return json;
 };
 
-const syncTodos = () => {
+const syncTodos = (client) => {
   if (!db) {
     return;
   }
 
-  let transaction = db.transaction(todoStoreName, 'readwrite');
+  let rows = [];
+
+  let transaction = db.transaction(todoStoreName, 'readonly');
   let objectStore = transaction.objectStore(todoStoreName);
   const unsyncedTodos = [];
 
@@ -110,34 +96,57 @@ const syncTodos = () => {
 
       try {
         const response = await syncTodosWithBackend(unsyncedTodos);
-        const { updatedRows } = response;
+        rows = response.rows.filter((row) => !row.deleted);
+        const rowsMap = new Map();
+
+        rows.forEach((row) => {
+          rowsMap.set(row.id, row);
+        });
 
         transaction = db.transaction(todoStoreName, 'readwrite');
         objectStore = transaction.objectStore(todoStoreName);
 
-        updatedRows.forEach((row) => {
-          const { idbId } = row;
-          const dataRequest = objectStore.get(idbId);
+        const updateCursorRequest = objectStore.openCursor();
 
-          dataRequest.onsuccess = (event) => {
-            const rowData = event.target.result;
+        updateCursorRequest.onsuccess = async function (event) {
+          const updateCursor = event.target.result;
 
-            if (rowData) {
-              if (row.deleted) {
-                objectStore.delete(idbId);
-              } else {
-                const { id, content, done } = row;
+          if (updateCursor) {
+            const { id } = updateCursor.value;
+            const row = rowsMap.get(id);
 
-                rowData.id = id;
-                rowData.content = content;
-                rowData.done = done;
-                rowData.synced = true;
+            if (row && !row.deleted) {
+              const { content, done } = row;
+              const updatedRowData = {
+                id,
+                content,
+                done,
+                synced: true,
+              };
 
-                objectStore.put(rowData, idbId);
-              }
+              updateCursor.update(updatedRowData);
+            } else {
+              updateCursor.delete();
             }
+
+            rowsMap.delete(id);
+
+            updateCursor.continue();
+          } else {
+            rowsMap.forEach((rowData) => {
+              objectStore.add(rowData);
+            });
+
+            console.log('[Service Worker] IndexedDB data sync successful');
+
+            if (!client) return;
+
+            client.postMessage({
+              type: 'sync-todos',
+              rows,
+            });
           }
-        });
+        }
       } catch (error) {
         console.error(error);
       }
@@ -147,6 +156,8 @@ const syncTodos = () => {
   cursorRequest.onerror = function (event) {
     console.error('[Service Worker] Error iterating over records in IndexedDB:', event.target.error);
   };
+
+  return rows;
 };
 
 self.addEventListener('install', (event) => {
@@ -183,7 +194,7 @@ self.addEventListener('fetch', async (event) => {
               initDB();
             }
 
-            populateIndexedDB(responseData);
+            populateIndexedDB(responseData);   
           });
 
           return response;
@@ -323,8 +334,12 @@ self.onmessage = function(event) {
   }
 };
 
-self.addEventListener('sync', (event) => {
-  if (event.tag === 'sync-todos') {
-    event.waitUntil(syncTodos());
+self.addEventListener('message', (event) => {
+  if (event.data?.type === 'sync-todos') {
+    event.waitUntil((async () => {
+      const client = await self.clients?.get(event.source.id);
+
+      syncTodos(client);
+    })());
   }
 });

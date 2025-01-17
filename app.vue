@@ -1,16 +1,4 @@
 <script setup>
-async function registerSync() {
-  const registration = await navigator.serviceWorker.ready;
-
-  try {
-    window.addEventListener('online', () => {
-      registration.sync.register('sync-todos');
-    });
-  } catch(e) {
-    console.error('Sync registration failed');
-  }
-};
-
 useHead({
   title: 'Todo App',
   meta: [
@@ -34,8 +22,6 @@ useHead({
     }
   ]
 });
-
-registerSync();
 </script>
 
 <template>

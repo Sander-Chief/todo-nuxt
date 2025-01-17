@@ -96,6 +96,10 @@ export const useTodoStore = defineStore('todos', () => {
     });
   }
 
+  const setTodos = (data: TTodo[]) => {
+    todos.value = data;
+  }
+
   const addTodo = async () => {
     if (!newTodo.value) {
       return;
@@ -206,6 +210,7 @@ export const useTodoStore = defineStore('todos', () => {
     todos,
     newTodo,
     getTodos,
+    setTodos,
     addTodo,
     toggleTodoDone,
     deleteTodo
