@@ -12,6 +12,7 @@ const {
   toggleTodoDone,
   deleteTodo
 } = todoStore;
+const router = useRouter();
 
 async function registerSync() {
   const registration = await navigator.serviceWorker.ready;
@@ -42,6 +43,13 @@ provide('toggleTodoDone', toggleTodoDone);
 provide('deleteTodo', deleteTodo);
 
 registerSync();
+
+onMounted(async () => {
+  const response = await fetch('/api/checkAuth');
+  if (response.status === 401) {
+    router.push('/login');
+  }
+});
 </script>
 
 <template>
