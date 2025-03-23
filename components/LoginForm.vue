@@ -1,49 +1,10 @@
 <script setup>
-import { ref } from 'vue';
-import { useRouter } from 'vue-router';
+import { storeToRefs } from 'pinia';
+import { useAuthStore } from '~/store/auth';
 
-const router = useRouter();
-
-const username = ref('');
-const password = ref('');
-
-const onLogin = async () => {
-    const response = await fetch('/api/login', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        username: username.value,
-        password: password.value,
-      }),
-    });
-
-    if (response.status === 200) {
-      router.push('/');
-    } else {
-      alert('Invalid credentials.');
-    }
-};
-
-const onRegister = async () => {
-  const response = await fetch('/api/register', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      username: username.value,
-      password: password.value,
-    }),
-  });
-
-  if (response.status === 200) {
-    alert('Registration successful. Please log in.');
-  } else {
-    alert('Registration failed. Username may already be taken.');
-  }
-}
+const authStore = useAuthStore();
+const { username, password } = storeToRefs(authStore);
+const { onLogin, onRegister } = authStore;
 </script>
 
 <template>

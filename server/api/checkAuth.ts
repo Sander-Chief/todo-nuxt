@@ -10,10 +10,19 @@ export default defineEventHandler((event) => {
     });
   }
 
-  const user = jwt.verify(token, 'secret-key');
+  try {
+    const user = jwt.verify(token, 'secret-key');
 
-  return {
-    status: 'SUCCESS',
-    user,
-  };
+    return {
+      status: 'SUCCESS',
+      user,
+    };
+  } catch (error) {
+    console.log(error);
+
+    throw createError({
+      statusCode: 401,
+      message: 'Bad credentials.',
+    });
+  }
 });
