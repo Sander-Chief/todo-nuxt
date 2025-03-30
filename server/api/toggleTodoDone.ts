@@ -1,10 +1,14 @@
 import db from './db';
 
+const query = 'UPDATE todos SET done = ? WHERE id = ? AND user_id = ?';
+
 export default defineEventHandler(async (event) => {
   const { done, id } = await readBody(event);
 
   return new Promise((resolve, reject) => {
-    db.run('UPDATE todos SET done = ? WHERE id = ?', [done, id], function (error) {
+    const { userId } = event.context.auth;
+
+    db.run(query, [done, id, userId], function (error) {
       if (error) {
         reject(error);
       } else {

@@ -1,8 +1,12 @@
-import db from './db';  
+import db from './db';
 
-export default defineEventHandler(() => {
+const query = 'SELECT * FROM todos WHERE user_id = ?';
+
+export default defineEventHandler((event) => {
   return new Promise((resolve, reject) => {
-    db.all('SELECT * FROM todos', (error, rows) => {
+    const { userId } = event.context.auth;
+
+    db.all(query, [userId], (error, rows) => {
       if (error) {
         reject(error);
       } else {

@@ -7,25 +7,33 @@ export const useAuthStore = defineStore('auth', () => {
   const password = ref('');
   
   const onLogin = async () => {
-      const response = await fetch('/api/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          username: username.value,
-          password: password.value,
-        }),
-      });
-  
-      if (response.status === 200) {
-        router.push('/');
-      } else {
-        alert('Invalid credentials.');
-      }
+    if (!username || !password) {
+      return;
+    }
+
+    const response = await fetch('/api/login', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        username: username.value,
+        password: password.value,
+      }),
+    });
+
+    if (response.status === 200) {
+      router.push('/');
+    } else {
+      alert('Invalid credentials.');
+    }
   };
   
   const onRegister = async () => {
+    if (!username || !password) {
+      return;
+    }
+
     const response = await fetch('/api/register', {
       method: 'POST',
       headers: {

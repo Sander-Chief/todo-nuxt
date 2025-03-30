@@ -1,4 +1,3 @@
-import { getCookie } from 'h3';
 import jwt from 'jsonwebtoken';
 
 export default defineEventHandler((event) => {

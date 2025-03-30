@@ -1,10 +1,14 @@
 import db from './db';
 
+const query = 'DELETE FROM todos WHERE id = ? AND user_id = ?';
+
 export default defineEventHandler(async (event) => {
   const { id } = await readBody(event);
 
   return new Promise((resolve, reject) => {
-    db.run('DELETE FROM todos WHERE id = ?', [id], function (error) {
+    const { userId } = event.context.auth;
+
+    db.run(query, [id, userId], function (error) {
       if (error) {
         reject(error);
       } else {
