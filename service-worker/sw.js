@@ -38,7 +38,7 @@ const populateIndexedDB = (data) => {
     if (!cursor) {
       console.log('[Service Worker] No data, populating...');
 
-      data.forEach((dataEntry) => {
+      data.rows?.forEach((dataEntry) => {
         const addObjectRequest = objectStore.add({
           ...dataEntry,
           synced: true
@@ -96,7 +96,7 @@ const syncTodos = (client) => {
 
       try {
         const response = await syncTodosWithBackend(unsyncedTodos);
-        rows = response.rows.filter((row) => !row.deleted);
+        rows = response.data?.rows?.filter((row) => !row.deleted);
         const rowsMap = new Map();
 
         rows.forEach((row) => {

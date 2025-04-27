@@ -16,10 +16,9 @@ const onSubmit = () => emit('addTodo');
       name="newTodo"
       autocomplete="off"
       class="todo-input"
+      placeholder="wash the dishes, buy bread, etc"
     />
-    <button class="todo-add-button">
-      Add a task
-    </button>
+    <button class="todo-add-button">Add a task</button>
   </form>
 </template>
 

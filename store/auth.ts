@@ -1,4 +1,5 @@
 import { defineStore } from 'pinia';
+import { ResponseStatus } from '~/types';
 
 export const useAuthStore = defineStore('auth', () => {
   const router = useRouter();
@@ -11,7 +12,7 @@ export const useAuthStore = defineStore('auth', () => {
       return;
     }
 
-    const response = await fetch('/api/login', {
+    const response = await $fetch('/api/login', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -22,7 +23,7 @@ export const useAuthStore = defineStore('auth', () => {
       }),
     });
 
-    if (response.status === 200) {
+    if (response.statusMessage === ResponseStatus.SUCCESS) {
       router.push('/');
     } else {
       alert('Invalid credentials.');
@@ -34,7 +35,7 @@ export const useAuthStore = defineStore('auth', () => {
       return;
     }
 
-    const response = await fetch('/api/register', {
+    const response = await $fetch('/api/register', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -45,7 +46,7 @@ export const useAuthStore = defineStore('auth', () => {
       }),
     });
   
-    if (response.status === 200) {
+    if (response.statusMessage === ResponseStatus.SUCCESS) {
       alert('Registration successful. Please log in.');
     } else {
       alert('Registration failed. Username may already be taken.');

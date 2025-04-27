@@ -1,4 +1,5 @@
 import { defineStore } from 'pinia';
+import { ResponseStatus } from '~/types';
 
 export type TTodo = {
   id: number | null,
@@ -68,14 +69,24 @@ export const useTodoStore = defineStore('todos', () => {
 
   const getTodos = () => {
     useFetch('/api/getTodos').then(async (response) => {
+      if (!response?.data?.value) {
+        return;
+      }
+
       if (navigator.onLine) {
-        const { data } = response;
-        const rawData = toRaw(data.value) as TTodo[];
+        const { data, statusMessage, message } = toRaw(response.data.value);
+
+        if (statusMessage !== ResponseStatus.SUCCESS || !data) {
+          console.warn(message);
+          return;
+        }
+
+        const { rows } = data;
   
         const swPayload = {
           type: 'populateTodos',
-          data: rawData
-        };
+          data: rows,
+        }
   
         if (navigator.serviceWorker.controller) {
           navigator.serviceWorker.controller.postMessage(swPayload);
@@ -88,7 +99,7 @@ export const useTodoStore = defineStore('todos', () => {
           });
         }
   
-        todos.value = rawData;
+        todos.value = rows;
       } else {
         getTodosSW();
         // TODO add logic for listening to messages from SW
@@ -117,7 +128,7 @@ export const useTodoStore = defineStore('todos', () => {
           },
         });
     
-        if (response.status === 'SUCCESS' && response.id) {
+        if (response.statusMessage === ResponseStatus.SUCCESS && response.data?.id) {
           const newItem = {
             id: response.id,
             done: false,
@@ -126,7 +137,7 @@ export const useTodoStore = defineStore('todos', () => {
   
           todos.value.push(newItem);
   
-          addTodoSW(newItem.content, response.id, true);
+          addTodoSW(newItem.content, response.data?.id, true);
 
           newTodo.value = '';
         }
@@ -163,7 +174,7 @@ export const useTodoStore = defineStore('todos', () => {
           },
         });
 
-        if (response.status === 'SUCCESS') {
+        if (response.statusMessage === ResponseStatus.SUCCESS) {
           toggleTodoDoneSW(id as number, done, true);
 
           todo.done = !todo.done;
@@ -191,7 +202,7 @@ export const useTodoStore = defineStore('todos', () => {
           },
         });
     
-        if (response.status === 'SUCCESS') {
+        if (response.statusMessage === ResponseStatus.SUCCESS) {
           deleteTodoSW(id, true);
 
           todos.value.splice(index, 1);

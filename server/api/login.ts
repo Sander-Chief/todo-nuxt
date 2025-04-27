@@ -1,6 +1,7 @@
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import db from './db';
+import { ResponseStatus, ServerResponse } from '~/types';
 
 type User = {
   id: number,
@@ -8,14 +9,14 @@ type User = {
   password: string,
 };
 
-export default defineEventHandler(async (event) => {
+export default defineEventHandler<Promise<ServerResponse>>(async (event) => {
   const body = await readBody(event);
 
   return new Promise((resolve, reject) => {
     db.get('SELECT * FROM users WHERE username = ?', [body.username], async (error, user: User) => {
       if (error || !user) {
         return reject({
-          status: 'ERROR',
+          statusMessage: ResponseStatus.ERROR,
           message: 'Invalid credentials.',
         });
       }
@@ -25,7 +26,7 @@ export default defineEventHandler(async (event) => {
       const isValid = await bcrypt.compare(body.password, password);
       if (!isValid) {
         return reject({
-          status: 'ERROR',
+          statusMessage: ResponseStatus.ERROR,
           message: 'Invalid credentials.',
         });
       }
@@ -43,7 +44,7 @@ export default defineEventHandler(async (event) => {
       });
 
       resolve({
-        status: 'SUCCESS',
+        statusMessage: ResponseStatus.SUCCESS,
         message: 'Login successful.',
       });
     });

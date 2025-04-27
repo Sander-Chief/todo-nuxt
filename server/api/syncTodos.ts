@@ -1,4 +1,6 @@
+import { ResponseStatus, ServerResponse } from '~/types';
 import db from './db';
+import { TTodo } from '~/store/todos';
 
 type Todo = {
   id: number | null,
@@ -9,16 +11,17 @@ type Todo = {
   synced: boolean
 }
 
-export default defineEventHandler(async (event) => {
+export default defineEventHandler<Promise<ServerResponse<{ rows: TTodo[] }>>>(async (event) => {
   const todos = await readBody(event);
 
-  if (!todos?.length) {
-    return {
-      status: 'ERROR'
-    };
-  }
-
   return new Promise(async (resolve, reject) => {
+    if (!todos?.length) {
+      return reject({
+        statusMessage: ResponseStatus.ERROR,
+        message: 'No todos to sync',
+      });
+    }
+
     try {
       const { userId } = event.context.auth;
       const syncedIds: Number[] = [];
@@ -71,7 +74,10 @@ export default defineEventHandler(async (event) => {
       let otherRows: Todo[] = await new Promise((resolve, reject) => {
         db.all(`SELECT * FROM todos WHERE ID NOT IN (${syncedIdsStringified}) AND user_id = ?`, [userId], (error, rows: Todo[]) => {
           if (error) {
-            reject(error);
+            reject({
+              statusMessage: ResponseStatus.ERROR,
+              message: error,
+            });
           } else {
             resolve(rows);
           }
@@ -79,13 +85,17 @@ export default defineEventHandler(async (event) => {
       });
 
       resolve({
-        status: 'SUCCESS',
-        rows: [...updatedRows, ...otherRows],
+        statusMessage: ResponseStatus.SUCCESS,
+        data: {
+          rows: [...updatedRows, ...otherRows],
+        }
       });
     } catch (error) {
       console.error('Error updating database:', error);
-      reject(error);
+      reject({
+        statusMessage: ResponseStatus.ERROR,
+        message: error,
+      });
     }
   });
-
 });

@@ -1,10 +1,12 @@
-export default defineNuxtRouteMiddleware(async (to, from) => {
-  const response = await fetch('/api/checkAuth');
+import { ResponseStatus } from '~/types';
 
-  const { status } = response;
+export default defineNuxtRouteMiddleware(async (to, from) => {
+  const response = await $fetch('/api/checkAuth');
+
+  const { statusMessage } = response;
   const { path } = to;
 
-  if (status === 200) {
+  if (statusMessage === ResponseStatus.SUCCESS) {
     if (path === '/' || path === '/login') {
       return navigateTo('/todos');
     }

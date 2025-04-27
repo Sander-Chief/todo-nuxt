@@ -1,7 +1,8 @@
 import bcrypt from 'bcrypt';
 import db from './db';
+import { ResponseStatus, ServerResponse } from '~/types';
 
-export default defineEventHandler(async (event) => {
+export default defineEventHandler<Promise<ServerResponse>>(async (event) => {
   const body = await readBody(event);
   const { username, password } = body;
 
@@ -12,13 +13,13 @@ export default defineEventHandler(async (event) => {
       'INSERT INTO users (username, password) VALUES (?, ?)', [username, hashedPassword], function (error) {
         if (error) {
           return reject({
-            status: 'ERROR',
+            statusMessage: ResponseStatus.ERROR,
             message: 'User already exists.'
           });
         }
 
         resolve({
-          status: 'SUCCESS',
+          statusMessage: ResponseStatus.SUCCESS,
           message: 'User registered.',
         });
       }

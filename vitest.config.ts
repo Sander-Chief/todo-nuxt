@@ -19,5 +19,8 @@ export default defineVitestConfig({
     // outputFile: {
     //     html: './coverage/'
     // }
+    include: [
+      '**/tests/components/*',
+    ]
   },
 });
