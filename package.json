@@ -9,7 +9,8 @@
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
     "test": "vitest run",
-    "test:e2e": "npx playwright test"
+    "test:e2e": "npx playwright test",
+    "db:init": "node ./setup/dbInit.js"
   },
   "devDependencies": {
     "@nuxt/devtools": "latest",
