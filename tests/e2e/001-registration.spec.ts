@@ -9,6 +9,7 @@ test('User registration', async ({ page }) => {
   await page.getByPlaceholder('Username').fill(`test_user`);
   await page.getByPlaceholder('Password').fill('test_pass');
   await page.getByRole('button', { name: 'Register' }).click();
+  await page.waitForTimeout(1000); 
   await page.getByRole('button', { name: 'Login' }).click();
   await page.getByRole('button', { name: 'Login' }).click();
 

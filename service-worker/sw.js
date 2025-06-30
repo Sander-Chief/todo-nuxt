@@ -194,7 +194,7 @@ self.addEventListener('fetch', async (event) => {
               initDB();
             }
 
-            populateIndexedDB(responseData);   
+            populateIndexedDB(responseData.data);   
           });
 
           return response;

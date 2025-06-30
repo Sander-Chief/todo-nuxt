@@ -67,44 +67,44 @@ export const useTodoStore = defineStore('todos', () => {
   const todos = ref<TTodo[]>([]);
   const newTodo = ref('');
 
-  const getTodos = () => {
-    useFetch('/api/getTodos').then(async (response) => {
-      if (!response?.data?.value) {
+  const getTodos = async () => {
+    const response = await $fetch('/api/getTodos');
+
+    if (!response?.data) {
+      return;
+    }
+
+    if (navigator.onLine) {
+      const { data, statusMessage, message } = response;
+
+      if (statusMessage !== ResponseStatus.SUCCESS || !data) {
+        console.warn(message);
         return;
       }
 
-      if (navigator.onLine) {
-        const { data, statusMessage, message } = toRaw(response.data.value);
+      const { rows } = data;
 
-        if (statusMessage !== ResponseStatus.SUCCESS || !data) {
-          console.warn(message);
-          return;
-        }
-
-        const { rows } = data;
-  
-        const swPayload = {
-          type: 'populateTodos',
-          data: rows,
-        }
-  
-        if (navigator.serviceWorker.controller) {
-          navigator.serviceWorker.controller.postMessage(swPayload);
-        } else {
-          console.log('Service Worker is inactive or not ready yet');
-          navigator.serviceWorker.ready.then((registration) => {
-            registration.pushManager.getSubscription().then((subscription) => {
-              navigator.serviceWorker.controller?.postMessage(swPayload);
-            });
-          });
-        }
-  
-        todos.value = rows;
-      } else {
-        getTodosSW();
-        // TODO add logic for listening to messages from SW
+      const swPayload = {
+        type: 'populateTodos',
+        data: rows,
       }
-    });
+
+      if (navigator.serviceWorker.controller) {
+        navigator.serviceWorker.controller.postMessage(swPayload);
+      } else {
+        console.log('Service Worker is inactive or not ready yet');
+        navigator.serviceWorker.ready.then((registration) => {
+          registration.pushManager.getSubscription().then((subscription) => {
+            navigator.serviceWorker.controller?.postMessage(swPayload);
+          });
+        });
+      }
+
+      todos.value = rows;
+    } else {
+      getTodosSW();
+      // TODO add logic for listening to messages from SW
+    }
   }
 
   const setTodos = (data: TTodo[]) => {

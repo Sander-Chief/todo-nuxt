@@ -11,7 +11,8 @@ export type DatabaseExtended = Database & {
   }>,
 }
 
-const dbPath = path.resolve(path.dirname('./'), 'todo.db');
+const dbName = process.env.DATABASE_PATH ?? 'todo.db';
+const dbPath = path.resolve(path.dirname('./'), dbName);
 const db: DatabaseExtended = new sqlite3.Database(dbPath);
 
 db.query = function (sql, params) {
