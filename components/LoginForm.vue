@@ -4,7 +4,7 @@ import { useAuthStore } from '~/store/auth';
 
 const authStore = useAuthStore();
 const { username, password } = storeToRefs(authStore);
-const { onLogin, onRegister } = authStore;
+const { onLogin, onRegister, onGoogleSignInSuccess, onGoogleSignInError } = authStore;
 </script>
 
 <template>
@@ -38,6 +38,11 @@ const { onLogin, onRegister } = authStore;
     >
       Register
     </button>
+
+    <GoogleSignInButton
+      @success="onGoogleSignInSuccess"
+      @error="onGoogleSignInError"
+    />
   </div>
 </template>
 

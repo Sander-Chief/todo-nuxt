@@ -36,6 +36,7 @@
     "bcrypt": "^5.1.1",
     "h3": "^1.15.0",
     "jsonwebtoken": "^9.0.2",
+    "nuxt-vue3-google-signin": "^0.0.13",
     "pinia": "^2.1.6",
     "sqlite3": "^5.1.6",
     "workbox-core": "^7.0.0",

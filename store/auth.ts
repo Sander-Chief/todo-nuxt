@@ -53,10 +53,34 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
+  const onGoogleSignInSuccess = async (googleUser: any) => {
+    const response = await $fetch('/api/google', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        credential: googleUser.credential,
+      }),
+    });
+
+    if (response.statusMessage === ResponseStatus.SUCCESS) {
+      router.push('/');
+    } else {
+      alert('Google Sign-In failed.');
+    }
+  };
+
+  const onGoogleSignInError = (error: any) => {
+    console.error('Google Sign-In Error:', error);
+  };
+
   return {
     username,
     password,
     onLogin,
     onRegister,
+    onGoogleSignInSuccess,
+    onGoogleSignInError,
   };
 });

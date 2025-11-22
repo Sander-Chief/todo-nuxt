@@ -10,7 +10,13 @@ export default defineNuxtConfig({
   modules: [
     '@pinia/nuxt',
     '@vite-pwa/nuxt',
-    '@nuxt/test-utils/module'
+    '@nuxt/test-utils/module',
+    [ 
+      'nuxt-vue3-google-signin',
+      {
+        clientId: process.env.GOOGLE_CLIENT_ID,
+      }
+    ]
   ],
   pwa: {
     devOptions: {

@@ -13,7 +13,7 @@ export default defineEventHandler<Promise<ServerResponse>>(async (event) => {
   const body = await readBody(event);
 
   return new Promise((resolve, reject) => {
-    db.get('SELECT * FROM users WHERE username = ?', [body.username], async (error, user: User) => {
+    db.get('SELECT * FROM users WHERE username = ? AND google_id IS NULL', [body.username], async (error, user: User) => {
       if (error || !user) {
         return reject({
           statusMessage: ResponseStatus.ERROR,
